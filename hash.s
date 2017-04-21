@@ -9,6 +9,7 @@ str_chave:	.asciiz	"Digite um valor de chave\n"
 .align 4
 TabelaHash:	.space  64
 sep:   		.asciiz " --> "
+newline:	.asciiz "\n"
 
 .align 2
 .text
@@ -23,6 +24,9 @@ popula:		sw   $t1, TabelaHash($t0)
 
 #aqui começa o do...while do menu
 do_while:
+		li $v0, 4
+		la $a0, newli
+		syscall
 		li $v0, 4
 		la $a0, str_first
 		syscall
@@ -74,7 +78,7 @@ case3:
 		syscall
 		li $v0, 5
 		syscall
-		j do_while
+		j procura
 case4:
 		j exibe
 case0:
@@ -120,7 +124,7 @@ loop:
 		beq $v0, $t9, fim
 		
 		#verifica se a chave já existe no vetor, se não existe ele pula pra primeira iteração
-		la  $s1, TabelaHash($v0)		#salvando em registrador qualquer
+		lw  $s1, TabelaHash($t3)		#salvando em registrador qualquer
 		beq $t9, $s1, trata_existencia
 		
 		jal hash
@@ -135,11 +139,11 @@ loop:
 	        
         #fazer a nova struct ser a atual
         	move $s1,$v0
-        	sw $s1, TabelaHash($t3)
+        	#sw $s1, TabelaHash($t3)
         	
         #inicializa a struct
 	        sw $t2,0($s1)
-
+	        
         	addi $s2,$s2,1         #counter++
 	        b loop
         
@@ -164,20 +168,33 @@ remove:
 
 
 #---------------------------------------------------------------------------------------------------------------------------#
-procura:	
+procura:	mul $v0, $v0, $t8
+		lw $s0, TabelaHash($v0)			# a próxima linha começa de fato
 
-
-#---------------------------------------------------------------------------------------------------------------------------#
-exibe:
-		beq $s0, $t9, do_while			# enquanto o ponteiro não for null
+comecadefato:	beqz $s0, do_while			# enquanto o ponteiro não for null
 	        
         	li $v0,1				#printa
-        	lw  $a0,TabelaHash($t3)		#recupera o dado da struct
+        	lw  $a0,0($s0)		#recupera o dado da struct
 	        syscall                   
 	        
 	        la $a0,sep            #printa separador
 	        li $v0,4              
 	        syscall               
 	        	        
-	        la $s0,4($s0)         #carrega ponteiro para a proxima struct
-	        b case0
+	        lw $s0,4($s0)         #carrega ponteiro para a proxima struct
+	        b comecadefato
+
+
+#---------------------------------------------------------------------------------------------------------------------------#
+exibe:		beqz $s0, do_while			# enquanto o ponteiro não for null
+	        
+        	li $v0,1				#printa
+        	lw  $a0,0($s0)		#recupera o dado da struct
+	        syscall                   
+	        
+	        la $a0,sep            #printa separador
+	        li $v0,4              
+	        syscall               
+	        	        
+	        lw $s0,4($s0)         #carrega ponteiro para a proxima struct
+	        b exibe
