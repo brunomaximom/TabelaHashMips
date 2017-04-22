@@ -1,11 +1,18 @@
+# Trabalho de Bruno Maximo e Melo, número USP  - feito individual
+# 3 Bugs:
+# 1) a lista é simplesmente encadeada
+# 2) não consigo adicionais mais de 2 elementos nas listas porque ele perde o endereço dos proximos
+# 3) na busca o programa não busca valores > 16
+
 .data
 str_first:	.asciiz	"Digite o numero de uma das opcoes a seguir:\n"
 str_inserir:	.asciiz	"(1)Inserir elemento na tabela hash\n"
 str_remover:	.asciiz	"(2)Remover elemento da tabela hash\n"
-str_buscar:	.asciiz	"(3)Buscar elemento na tabela hash\n"
+str_buscar:	.asciiz	"(3)Buscar por chave\n"
 str_exibir:	.asciiz	"(4)Exibir tabela hash\n"
 str_sair:	.asciiz	"(0)Sair\n"
 str_chave:	.asciiz	"Digite um valor de chave\n"
+str_entrada:	.asciiz "A entrada dessa chave no vetor é: "
 .align 4
 TabelaHash:	.space  64
 sep:   		.asciiz " --> "
@@ -14,7 +21,7 @@ newline:	.asciiz "\n"
 .align 2
 .text
 .globl main
-main:		li $t8, 4		#resolvedor de erros de load/store no trabalho inteiro :P 
+main:		
 		addi $t0, $zero, 0	#t0 = base do vetor
 		addi $t1, $zero, -1		#t1 = conteudo a ser gravado
 		
@@ -24,8 +31,10 @@ popula:		sw   $t1, TabelaHash($t0)
 
 #aqui começa o do...while do menu
 do_while:
+		li $t3, 0
+		
 		li $v0, 4
-		la $a0, newli
+		la $a0, newline
 		syscall
 		li $v0, 4
 		la $a0, str_first
@@ -64,22 +73,30 @@ case1:
 		li $v0, 4
 		la $a0, str_chave
 		syscall
+		
 		j insere
 case2:
 		li $v0, 4
 		la $a0, str_chave
 		syscall
+		
 		li $v0, 5
 		syscall
-		j do_while
+		
+		j remove
 case3:
-		li $v0, 4
-		la $a0, str_chave
-		syscall
-		li $v0, 5
-		syscall
 		j procura
 case4:
+		li $v0, 4
+	        la $a0, newline
+	        syscall
+	      
+		lw  $s0, TabelaHash($t3)
+		
+		add $t3, $t3, 4
+		
+		bgt $t3, 64, do_while
+		beq $s0, -1, outro_menosum		
 		j exibe
 case0:
 		li $v0, 10
@@ -88,17 +105,22 @@ case0:
 
 #Funções começam a partir daqui. 
 #---------------------------------------------------------------------------------------------------------------------------#
+#---------------------------------------------------------------------------------------------------------------------------#
+#função insere
 insere:		
 		li $v0, 5
 		syscall
-#insere continua normalmente, essa label é apenas para tratar a existencia da chave no vetor	
-trata_existencia:
+
 		add $t2, $zero, $v0		#grava permanentemente o conteúdo escrito do teclado para t2
 			
 		jal hash
-		mul $t3, $t3, $t8
+		
+		mul $t3, $t3, 4
+		
+#insere continua normalmente, essa label é apenas para tratar a existencia da chave no vetor	
+trata_existencia:
 		li  $v0,9             #aloca memória
-	        li  $a0,8             
+	        li  $a0,8            #aloca 4 pro conteudo e 8 para 2 ponteiros, um para o proximo e outro para o anterior 
 	        syscall
 		
 		move  $s1, $v0		# $s1 = &(primeiro)
@@ -119,28 +141,29 @@ loop:
 		syscall
 		
 		add $t2, $zero, $v0		#grava permanentemente o conteúdo escrito do teclado para t2
-
-		li $t9, -1			#condição de parada
-		beq $v0, $t9, fim
 		
-		#verifica se a chave já existe no vetor, se não existe ele pula pra primeira iteração
-		lw  $s1, TabelaHash($t3)		#salvando em registrador qualquer
-		beq $t9, $s1, trata_existencia
+		beq $v0, -1, fim
 		
 		jal hash
+		
+		#verifica se a chave já existe no vetor, se não existe ele pula pra primeira iteração
+		mul $t3, $t3, 4
+		lw  $s1, TabelaHash($t3)		#salvando em registrador qualquer
+		beq $s1, -1, trata_existencia
  
-		mul $t3, $t3, $t8
       		li $v0,9        
-	        li $a0,8            
+	        li $a0,8          
 	        syscall        
         
+        	move $s2, $s1
         # aponta para o próximo
-        	sw $v0,4($s1)        # $s1 = &(proximo)
+        	sw $v0, 4($s2)        		# $v0 = &(proximo)
+        	
 	        
         #fazer a nova struct ser a atual
         	move $s1,$v0
         	#sw $s1, TabelaHash($t3)
-        	
+        
         #inicializa a struct
 	        sw $t2,0($s1)
 	        
@@ -162,31 +185,68 @@ hash:					#t3 retornará a posição da tabela
 
 
 #---------------------------------------------------------------------------------------------------------------------------#
+#---------------------------------------------------------------------------------------------------------------------------#
+#essa remoção remove o primeiro nó da lista
 remove:
-
+		add $t2, $zero, $v0
+		jal hash
+		
+		mul $t3, $t2, 4
+		lw $s0, TabelaHash($t3)
+		
+		lw $s0, 4($s0)				#capturo os ultimos 4 bytes do primeiro nó referente ao endereço
+		sw $s0, TabelaHash($t3)			#gravo este endereço em TabelaHash para que ela aponte para o segundo nó
 		j do_while	
 
 
 #---------------------------------------------------------------------------------------------------------------------------#
-procura:	mul $v0, $v0, $t8
-		lw $s0, TabelaHash($v0)			# a próxima linha começa de fato
-
-comecadefato:	beqz $s0, do_while			# enquanto o ponteiro não for null
+#---------------------------------------------------------------------------------------------------------------------------#
+#função de busca
+procura:	
+		li $v0, 4
+		la $a0, str_chave
+		syscall
+		
+		li $v0, 5
+		syscall
+		
+		add $t2, $zero, $v0
+		jal hash
+		
+		mul $t3, $t2, 4
+		
+for_interno:	beqz $s0, menosum			# enquanto o ponteiro não for null
 	        
-        	li $v0,1				#printa
-        	lw  $a0,0($s0)		#recupera o dado da struct
-	        syscall                   
+	        lw  $s0,TabelaHash($t3)		#recupera o dado da struct
+	        beq $s0, -1, menosum
+        	lw $a0, 0($s0)               
 	        
-	        la $a0,sep            #printa separador
-	        li $v0,4              
-	        syscall               
+	        beq $a0, $v0, printa_conteudo             
 	        	        
-	        lw $s0,4($s0)         #carrega ponteiro para a proxima struct
-	        b comecadefato
+	        la $s0,4($s0)         #carrega ponteiro para a proxima struct
+		
+		j for_interno
+		
+printa_conteudo:
+		li $v0, 1
+		la $a0, ($a0)
+		syscall
+		
+		j do_while
+		
+menosum:	
+		li $v0, 1
+		li $a0, -1
+		syscall
+
+		j do_while
 
 
 #---------------------------------------------------------------------------------------------------------------------------#
-exibe:		beqz $s0, do_while			# enquanto o ponteiro não for null
+#---------------------------------------------------------------------------------------------------------------------------#
+#função que exibe a tabela hash inteira
+exibe:		
+		beqz $s0, case4			# enquanto o ponteiro não for null
 	        
         	li $v0,1				#printa
         	lw  $a0,0($s0)		#recupera o dado da struct
@@ -198,3 +258,11 @@ exibe:		beqz $s0, do_while			# enquanto o ponteiro não for null
 	        	        
 	        lw $s0,4($s0)         #carrega ponteiro para a proxima struct
 	        b exibe
+	        
+#printa -1 a qualquer custo quando a lista estiver vazia
+outro_menosum:
+		li $v0,1
+        	li  $a0,-1		
+	        syscall                              
+	        
+	        b case4
