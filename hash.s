@@ -1,4 +1,3 @@
-# Trabalho de Bruno Maximo e Melo, número USP  - feito individual
 # 3 Bugs:
 # 1) a lista é simplesmente encadeada
 # 2) não consigo adicionais mais de 2 elementos nas listas porque ele perde o endereço dos proximos
