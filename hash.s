@@ -1,5 +1,4 @@
-# 1 Bug:
-# 1) não consigo adicionar mais de 2 elementos nas listas porque o segundo perde o endereço dos próximos
+# Nenhum bug com os testes que realizei
 
 .data
 str_first:	.asciiz	"Digite o numero de uma das opcoes a seguir:\n"
@@ -117,7 +116,7 @@ insere:
 #insere continua normalmente, essa label é apenas para tratar a existencia da chave no vetor	
 trata_existencia:
 		li  $v0,9             #aloca memória
-	        li  $a0,8            #aloca 4 pro conteudo e 8 para 2 ponteiros, um para o proximo e outro para o anterior 
+	        li  $a0,12            #aloca 4 pro conteudo e 8 para 2 ponteiros, um para o proximo e outro para o anterior 
 	        syscall
 		
 		move  $s1, $v0		# $s1 = &(primeiro)
@@ -143,21 +142,21 @@ loop:
 		
 		#verifica se a chave já existe no vetor, se não existe ele pula pra primeira iteração
 		mul $t3, $t3, 4
-		lw  $s1, TabelaHash($t3)		#salvando em registrador qualquer
-		beq $s1, -1, trata_existencia
+		lw  $s2, TabelaHash($t3)		#salvando em registrador qualquer
+		beq $s2, -1, trata_existencia
  
       		li $v0,9        
-	        li $a0,8          
+	        li $a0,12         
 	        syscall        
-        
-        	move $s2, $s1
+       
+        #aponta para o anterior 
+        	sw $s1, 8($v0)			# $s1 = &(anterior)
         # aponta para o próximo
-        	sw $v0, 4($s2)        		# $v0 = &(proximo)
+        	sw $v0, 4($s1)        		# $v0 = &(proximo)
         	
 	        
         #fazer a nova struct ser a atual
         	move $s1,$v0
-        	#sw $s1, TabelaHash($t3)
         
         #inicializa a struct
 	        sw $t2,0($s1)
