@@ -1,3 +1,3 @@
 O objetivo era criar uma tabela hash que trata colisões com uma lista encadeada em Assembly Mips.
 
-Ainda em desenvolvimento: 99% completo.
+Ainda em desenvolvimento: 100% completo.
