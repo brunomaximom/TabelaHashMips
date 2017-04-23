@@ -1,7 +1,7 @@
+# Trabalho de Bruno Maximo e Melo, número USP: 10442235 - feito individual
 # 3 Bugs:
 # 1) a lista é simplesmente encadeada
-# 2) não consigo adicionais mais de 2 elementos nas listas porque ele perde o endereço dos proximos
-# 3) na busca o programa não busca valores > 16
+# 2) não consigo adicionar mais de 2 elementos nas listas porque o segundo perde o endereço dos próximos
 
 .data
 str_first:	.asciiz	"Digite o numero de uma das opcoes a seguir:\n"
@@ -129,8 +129,6 @@ trata_existencia:
                 # grava conteúdo passado pelo teclado na memória nos primeiros 4 bytes da memória
 	        sw $t2, 0($s1)
 	        
-	        li $s2, 2             # counter = 2
-	        
 	                
 loop: 
 		li $v0, 4
@@ -187,6 +185,15 @@ hash:					#t3 retornará a posição da tabela
 #---------------------------------------------------------------------------------------------------------------------------#
 #essa remoção remove o primeiro nó da lista
 remove:
+		li $v0, 4
+		la $a0, str_chave
+		syscall
+		
+		li $v0, 5
+		syscall
+		
+		beq $v0, -1, do_while
+		
 		add $t2, $zero, $v0
 		jal hash
 		
@@ -195,7 +202,7 @@ remove:
 		
 		lw $s0, 4($s0)				#capturo os ultimos 4 bytes do primeiro nó referente ao endereço
 		sw $s0, TabelaHash($t3)			#gravo este endereço em TabelaHash para que ela aponte para o segundo nó
-		j do_while	
+		j remove	
 
 
 #---------------------------------------------------------------------------------------------------------------------------#
@@ -212,11 +219,13 @@ procura:
 		add $t2, $zero, $v0
 		jal hash
 		
-		mul $t3, $t2, 4
+		mul $t3, $t3, 4
+		
+	        lw  $s0,TabelaHash($t3)		#recupera o dado da struct
 		
 for_interno:	beqz $s0, menosum			# enquanto o ponteiro não for null
 	        
-	        lw  $s0,TabelaHash($t3)		#recupera o dado da struct
+
 	        beq $s0, -1, menosum
         	lw $a0, 0($s0)               
 	        
