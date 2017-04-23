@@ -1,7 +1,5 @@
-# Trabalho de Bruno Maximo e Melo, número USP: 10442235 - feito individual
-# 3 Bugs:
-# 1) a lista é simplesmente encadeada
-# 2) não consigo adicionar mais de 2 elementos nas listas porque o segundo perde o endereço dos próximos
+# 1 Bug:
+# 1) não consigo adicionar mais de 2 elementos nas listas porque o segundo perde o endereço dos próximos
 
 .data
 str_first:	.asciiz	"Digite o numero de uma das opcoes a seguir:\n"
